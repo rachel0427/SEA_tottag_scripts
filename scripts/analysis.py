@@ -14,12 +14,24 @@ MOTION1 = sys.argv[2]
 MOTION2 = sys.argv[3]
 MOTION3 = sys.argv[4]
 
+#DATAFILE = "03_SS_20210109.LOG"
+#MOTION1 = "03_motions.csv"
+#MOTION2 = "06_motions.csv"
+#MOTION3 = "07_motions.csv"
+
+timestamp = []
+device1 = []
+device2 = []
+dist = []
+num = []
+tf = []
+
 
 # Step 1 of processing log file - creating dictionaries with the tuple (device 2, device1) as key, key is associated
 # with arrays of tuples that has the form (timestamp, proximity, within 2 ft or not(boolean value))
 # This function takes in two parameters, the first parameter is the log file name, the second parameter is used to keep
 # track of device tag (used for naming output files); the function returns a dictionary and a string(the device tag)
-def process_single1(script, d):
+def process_single1(script, s, e):
     mDict = {}
     with open(script) as f:
         # the following string operation gets the ID for the current device
@@ -28,7 +40,6 @@ def process_single1(script, d):
         if tag.strip():  # strip will remove all leading and trailing whitespace such as '\n' or ' ' by default
             tag = tag.strip("\n ' '")
             totTagID = tag.split()[6].split(',')[0]
-            d = totTagID[15:17]
         # start going through each line of the log file and separate in range and out of range data
         for line in f:
             # if line is not a comment
@@ -37,19 +48,22 @@ def process_single1(script, d):
                 # the list is obtained by calling the split function on the string, in this case the function will split
                 # line based on tabs
                 tokens = line.split('\t')
-                # check for out of range code (999999)
-                # if int(tokens[2]) != OUT_OF_RANGE_CODE:
-                # if proximity data is within check in range (3ft/915mm)
-                if int(tokens[2]) <= inRangeDist:
-                    # use the setdefault function that initialize an array if the key has not yet been
-                    # add into the dictionary, or append to the end of the array if the key already exists
-                    # each key is associated with an array of tuples that has the form -
-                    # (timestamp, distance, boolean value of whether in checkin range)
-                    mDict.setdefault((tokens[1], totTagID), []).append((tokens[0], int(tokens[2]), True))
-                    # same as above;
-                else:
-                    mDict.setdefault((tokens[1], totTagID), []).append((tokens[0], int(tokens[2]), False))
-    return mDict, d
+
+                # check that the timestamp is within the common time window
+                if s <= int(tokens[0]) <= e:
+                    # check for out of range code (999999)
+                    # if int(tokens[2]) != OUT_OF_RANGE_CODE:
+                    # if proximity data is within check in range (3ft/915mm)
+                    if int(tokens[2]) <= inRangeDist:
+                        # use the setdefault function that initialize an array if the key has not yet been
+                        # add into the dictionary, or append to the end of the array if the key already exists
+                        # each key is associated with an array of tuples that has the form -
+                        # (timestamp, distance, boolean value of whether in checkin range)
+                        mDict.setdefault((tokens[1], totTagID), []).append((tokens[0], int(tokens[2]), True))
+                        # same as above;
+                    else:
+                        mDict.setdefault((tokens[1], totTagID), []).append((tokens[0], int(tokens[2]), False))
+    return mDict
 
 
 # step 2 of processing - After filtering through the data for proximity data that is within checkin range,
@@ -160,7 +174,7 @@ def motion_analysis(file):
             # device = (tokens[2].split("\n"))[0]
 
             time_array.append(time)
-        print(len(time_array))
+        # print(len(time_array))
         # print(time_array[0])  # type str
 
     # this is where we will be comparing timestamps and will need time_array as a reference array for help ^^^^^^
@@ -260,41 +274,75 @@ def motion_analysis(file):
 
 # in this function we are passing in three motion file dictionaries that results from the motion_analysis() function
 # also passing in the dictionary that we obtained from analysing the logfile data
-def merge_dataframe(motion1, motion2, motion3, prox_data, d):
+def merge_dataframe(motion1, motion2, motion3, prox_data):
     # converting to data frame where the first column is the keys of the dictionary and the second column is the data
     # so for example, dfMotions03 have timestamps as its first column and the motion data as second column
-    df_motion01 = pd.DataFrame(list(motion1.items()), columns=['key', 'motion'+MOTION1[0:2]])
-    df_motion02 = pd.DataFrame(list(motion2.items()), columns=['key', 'motion'+MOTION2[0:2]])
-    df_motion03 = pd.DataFrame(list(motion3.items()), columns=['key', 'motion'+MOTION3[0:2]])
-    df = pd.DataFrame(list(prox_data.items()), columns=['key', 'data'])
-    df_merge = pd.merge(df, df_motion03, on=['key'])
+    df_motion01 = pd.DataFrame((motion1.items()), columns=['timestamp', 'motion'+MOTION1[0:2]])
+    df_motion02 = pd.DataFrame((motion2.items()), columns=['timestamp', 'motion'+MOTION2[0:2]])
+    df_motion03 = pd.DataFrame((motion3.items()), columns=['timestamp', 'motion'+MOTION3[0:2]])
     # merge the data frames on timestamps
-    df_merge = pd.merge(df_merge, df_motion02, on=['key'])
-    df_merge = pd.merge(df_merge, df_motion01, on=['key'])
+    df_merge = pd.merge(prox_data, df_motion03, on=['timestamp'])
+    df_merge = pd.merge(df_merge, df_motion02, on=['timestamp'])
+    df_merge = pd.merge(df_merge, df_motion01, on=['timestamp'])
     # write to output file
-    # FIXME: filename = 'Merged_' + d + ".txt" - only device tag, no date
-    filename = DATAFILE[:-4] + "_merged.txt"
-    tfile = open(filename, 'w+')
-    tfile.write(df_merge.to_string())
-    tfile.close()
+    filename = DATAFILE[:-4] + "-merged.csv"
+    df_merge.to_csv(filename, index=None)
 
 
-device = ""
+# a function used to print out a dictionary for checking purpose
+def print_to_outf(dict):
+    # print to out file
+    outfile = "check-dict"
+    s = open(outfile, "w+")
+    for key in dict:
+        s.write(str(key) + "\n")
+        for i in range(len(dict[key])):
+            s.write("\t" + str(dict[key][i]) + "\n")
 
-# first call the first process function on the log file.
-# the function returns a list of 2 variables that are stored in "lst"
-# lst[0] is passed to the second process method, and lst[1] is used to name output files in later functions
-lst = process_single1(DATAFILE, device)
-mDict = process_single2(lst[0])
-device = lst[1]
 
-# then call sort_data_on_timestamp to reorganize the dictionaries so that the keys are timestamps
-sd = sort_data_on_timestamp(mDict)
+# this function is used for reformatting the data to create a dataframe with proper columns
+def reformat(sd):
+    # reformat dictionary
+    timestamp = []
+    device1 = []
+    device2 = []
+    dist = []
+    num = []
+    tf = []
+    for key in sd:
+        for i in range(len(sd[key])):
+            timestamp.append(key)
+            device2.append(sd[key][i][0][0])
+            device1.append(sd[key][i][0][1])
+            dist.append(sd[key][i][1])
+            num.append(sd[key][i][2])
+            tf.append(sd[key][i][3])
+
+    # create dataframe
+    # outfile2 = "check-arrays2"
+    # s2 = open(outfile2, "w+")
+    d = {'timestamp': timestamp, 'Device1': device1, 'Device2': device2, 'Proximity': dist, 'Count': num, 'T/F': tf}
+    d = pd.DataFrame(d).sort_values(by=['timestamp'])
+    return d
+
 
 # call motion analysis on all three motions csv file to get three dictionaries of motion data
 motion01 = motion_analysis(MOTION1)
 motion02 = motion_analysis(MOTION2)
 motion03 = motion_analysis(MOTION3)
 
+# find the start and end value of the time window common in all three motion files
+start = max(motion01.keys()[0], motion02.keys()[0], motion03.keys()[0])
+end = min(motion01.keys()[-1], motion02.keys()[-1], motion03.keys()[-1])
+
+# first call the first process function on the log file.
+mDict = process_single2(process_single1(DATAFILE, start, end))
+
+# then call sort_data_on_timestamp to reorganize the dictionaries so that the keys are timestamps
+sd = sort_data_on_timestamp(mDict)
+
+# reformat
+d = reformat(sd)
+
 # finally call the merge function to merge all the data
-merge_dataframe(motion01, motion02, motion03, sd, device)
+merge_dataframe(motion01, motion02, motion03, d)
