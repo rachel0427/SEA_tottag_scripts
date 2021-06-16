@@ -7,6 +7,7 @@ from sortedcontainers import SortedDict
 OUT_OF_RANGE_CODE = 999999
 inRangeDist = 915  # 3ft = 915mm
 
+
 # argv is the array of command line arguments after 'python3' starting at index 0
 # the command line argument would be "python analysis.py DATAFILE Motion1 Motion2 Motion3"
 DATAFILE = sys.argv[1]
@@ -150,10 +151,10 @@ def sort_data_on_timestamp(mDict):
         for index in range(len(mDict[key])):
             if len(mDict[key][index]) == 3:
                 sd.setdefault(int(mDict[key][index][0]), []).\
-                    append((key, mDict[key][index][1], -1, "false"))
+                    append((key, mDict[key][index][1], -1, 0))
             elif len(mDict[key][index]) == 4:
                 sd.setdefault(int(mDict[key][index][0]), []).\
-                    append((key, mDict[key][index][1], mDict[key][index][3], "true"))
+                    append((key, mDict[key][index][1], mDict[key][index][3], 1))
     return sd
 
 
@@ -321,7 +322,7 @@ def reformat(sd):
     # create dataframe
     # outfile2 = "check-arrays2"
     # s2 = open(outfile2, "w+")
-    d = {'timestamp': timestamp, 'Device1': device1, 'Device2': device2, 'Proximity': dist, 'Count': num, 'T/F': tf}
+    d = {'timestamp': timestamp, 'Device1': device1, 'Device2': device2, 'Proximity': dist, 'Count': num, 'Checkin_Occurred': tf}
     d = pd.DataFrame(d).sort_values(by=['timestamp'])
     return d
 
