@@ -44,7 +44,7 @@ def process_single1(script, s, e):
         # start going through each line of the log file and separate in range and out of range data
         for line in f:
             # if line is not a comment
-            if line[0] != '#':
+            if line[0] != '#' and line.find('#') == -1:
                 # tokens is a list where tokens[0] is timestamp, tokens[1] is device ID, and tokens[2] is measurement
                 # the list is obtained by calling the split function on the string, in this case the function will split
                 # line based on tabs
