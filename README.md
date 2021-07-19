@@ -34,17 +34,27 @@ Now, your data is ready to go, and you can begin running the tottagStats.py scri
 ### this code is currently being developed by the Spring 2021 data analysis team led by Dr. Virginia Salo
 to use `analysis.py` run: 
 
-### How to install libraries needed in `analysis.py`
-`pip install -r requirements.txt`
-
-### Before you install pandas, make sure you have pip installed
+### Before you install libraries, make sure you have pip installed
 Refer to this website for details (https://pip.pypa.io/en/stable/installing/). Pip should already be installed with installation of python but to be sure, run `pip -V` to check which version you are running.
 
-### How to install sortedcontainers library needed in analysis.py
-`pip3 install sortedcontainers` 
+### How to install libraries needed in `analysis.py`
+`pip install -r requirements.txt`
 
 ### Usage of analysis.py:
 To use analysis.py you must first run the motion.py script on each log file, this file can be found within the /Analysis folder. 
 For the motion.py file use : `python3 motion.py file_name` to process the logfile and the output should be a `motion_file.csv` file which will be used as input for the analysis.py script below.
 
 `python3 analysis.py logfile_name <motion_file_1.csv> <motion_file_2.csv> ... <motion_file_N.csv>`
+
+### Usage of `smoother-analysis.py`:
+This script is a combination of `tottagAverager.py`, `tottagSmoother.py`, `motion.py`, and `analysis-df.py`. 
+
+This script accepts 6 inputs, the first input is the smoothing value, the next two inputs are the start and end timestamps that you wish to analyse, and the rest are log files to smooth and analysis. Note that the first input log file should be the one that you want to do analysis on. 
+
+This script first average the log files and produce an averaged file for each log file, it then smooths all the input log files and output a smoothed file for each. Next, it does motion analysis on each log file and produce a motion data file for each. It finally does an analysis on the first input log file.
+
+This script outputs 10 files, including 3 averaged files, 3 smoothed files, 3 motion files, and 1 analysis result. 
+
+The script is run like this:
+
+`python3 smoother-analysis.py start_timestamp, end_timestamp, smooth_val logfile_name1 logfile_name2 logfile_name3`

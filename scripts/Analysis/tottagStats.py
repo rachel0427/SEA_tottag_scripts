@@ -16,7 +16,7 @@ def touchingDistance():
         first = True
         cDict = {}
         for line in f:
-            if line[0] != '#' and line.find('#') == -1:
+            if line[0] != '#':
                 tokens = line.split('\t')
                 if (first):
                     firstTime = int(tokens[0])
@@ -34,7 +34,7 @@ def skip():
     with open(logfile) as f:
         lastVal = 0
         for line in f:
-            if line[0] != '#' and line.find('#') == -1:
+            if line[0] != '#':
                 # Parse the individual reading parts
                 tokens = line.split('\t')
                 if (lastVal == 0):
@@ -48,7 +48,7 @@ def range():
     with open(logfile) as f:
         cDict = {}
         for line in f:
-            if line[0] != '#' and line.find('#') == -1:
+            if line[0] != '#':
                 tokens = line.split('\t')
                 if (tokens[2] != str(OUT_OF_RANGE_CODE)):
                     cDict[tokens[1]] = cDict.setdefault(tokens[1], 0) + 1
@@ -65,7 +65,7 @@ def regain():
         lastDict = {}
         regainValue = 30
         for line in f:
-            if line[0] != '#' and line.find('#') == -1:
+            if line[0] != '#':
                 tokens = line.split('\t')
                 if (float(tokens[2]) <= 3.0):
                     if (cDict.setdefault(tokens[1], 0) >= regainValue):

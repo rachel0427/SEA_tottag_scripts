@@ -27,7 +27,7 @@ class SmoothedGroup:
         self.stamps = []
         self.data = []
 
-# helper methof to average and write out the line. Pops oldest value off
+# helper method to average and write out the line. Pops oldest value off
     def average(self):
         averageVal = 0
         index = int(self.size/2)
@@ -41,14 +41,12 @@ class SmoothedGroup:
 
 
 OUT_OF_RANGE_CODE = 999999
-
 if len(sys.argv) < 2:
     print('USAGE: python tottag.py SMOOTHING VALUE LOG_FILE_PATH LOG_FILE_PATH LOG_FILE_PATH LOG_FILE_PATH')
     sys.exit(1)
 logs = sys.argv[2:]
 smoothVal = int(sys.argv[1])
 logfile_date = None
-
 
 for i in logs:
     outFile = i[:-4] + "-smoothed.log"
@@ -59,6 +57,7 @@ for i in logs:
         s.write(f.readline())
         for line in f:
             if line[0] != '#' and line.find('#') == -1:
+                print(str(line))
                 tokens = line.split('\t')
                 # this if only operates on the first recording from each mote.
                 # serves to initialize the class

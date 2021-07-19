@@ -40,7 +40,8 @@ for i in logs:
                         find = find.strip("\n ' '")
                         find = find.split()[6].split(',')[0]
                     for row in w:
-                        if row[0] != '#':
+                        # if line is not a comment, or if line does not contain any hashtags
+                        if row[0] != '#' and row.find('#') == -1:
                             token = row.split('\t')
                             if (token[1] == tag):
                                 if (int(token[2]) != OUT_OF_RANGE_CODE):
